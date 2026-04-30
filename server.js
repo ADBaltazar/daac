@@ -1,44 +1,39 @@
-require('dotenv').config();
+// server.js - NOVO FICHEIRO PARA A VERCEL
 const express = require('express');
 const mongoose = require('mongoose');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
-
-// Middleware para parsear JSON
 app.use(express.json());
-
-// String de conexão com MongoDB Atlas usando variáveis de ambiente
-const DB_USERNAME = process.env.DB_USERNAME;
-const DB_PASSWORD = process.env.DB_PASSWORD;
-const DB_CLUSTER = process.env.DB_CLUSTER;
-const DB_NAME = process.env.DB_NAME;
-
-// Verificar se todas as variáveis necessárias estão definidas
-if (!DB_USERNAME || !DB_PASSWORD || !DB_CLUSTER || !DB_NAME) {
-  console.error('❌ Erro: Variáveis de ambiente do MongoDB não configuradas corretamente');
-  console.error('Certifique-se de que .env contém: DB_USERNAME, DB_PASSWORD, DB_CLUSTER, DB_NAME');
-  process.exit(1);
-}
-
-const CONNECTION_STRING = `mongodb+srv://${DB_USERNAME}:${DB_PASSWORD}@${DB_CLUSTER}/${DB_NAME}`;
 
 // Schema do usuário
 const userSchema = new mongoose.Schema({
   nome: String,
   email: String,
-  dataCriacao: {
-    type: Date,
-    default: Date.now
-  }
+  dataCriacao: { type: Date, default: Date.now }
 });
 
-// Model do usuário
 const User = mongoose.model('Utilizadores', userSchema);
 
-// Rota para criar um usuário
+// Middleware para conectar ao MongoDB (com pooling)
+let cachedDb = null;
+
+async function connectToDatabase() {
+  if (cachedDb) {
+    console.log('📦 Usando conexão existente');
+    return cachedDb;
+  }
+  
+  console.log('🔌 Conectando ao MongoDB...');
+  const conn = await mongoose.connect(process.env.MONGODB_URI);
+  cachedDb = conn;
+  console.log('✅ Conectado ao MongoDB');
+  return cachedDb;
+}
+
+// Rotas
 app.post('/registrar', async (req, res) => {
   try {
+    await connectToDatabase();
     const { nome, email } = req.body;
     
     if (!nome || !email) {
@@ -57,9 +52,9 @@ app.post('/registrar', async (req, res) => {
   }
 });
 
-// Rota para listar todos os usuários
 app.get('/usuarios', async (req, res) => {
   try {
+    await connectToDatabase();
     const usuarios = await User.find();
     res.json(usuarios);
   } catch (error) {
@@ -67,19 +62,5 @@ app.get('/usuarios', async (req, res) => {
   }
 });
 
-// Conexão com MongoDB Atlas
-mongoose.connect(CONNECTION_STRING)
-.then(() => {
-  console.log('✅ Conectado ao MongoDB Atlas com sucesso!');
-  
-  // Iniciar o servidor apenas após conectar ao banco
-  app.listen(PORT, () => {
-    console.log(`🚀 Servidor rodando na porta ${PORT}`);
-    console.log(`📝 Endpoint para registrar usuário: POST http://localhost:${PORT}/registrar`);
-    console.log(`📋 Endpoint para listar usuários: GET http://localhost:${PORT}/usuarios`);
-  });
-})
-.catch((error) => {
-  console.error('❌ Erro ao conectar ao MongoDB Atlas:', error.message);
-  process.exit(1);
-});
+// Exportar para a Vercel (NÃO usar app.listen)
+module.exports = app;
