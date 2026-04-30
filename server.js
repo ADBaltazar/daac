@@ -62,5 +62,14 @@ app.get('/usuarios', async (req, res) => {
   }
 });
 
+app.get('/lista', async (req, res) => {
+  try {
+    await connectToDatabase();
+    const usuarios = await User.find();
+    res.json(usuarios);
+  } catch (error) {
+    res.status(500).json({ erro: error.message });
+  }
+});
 // Exportar para a Vercel (NÃO usar app.listen)
 module.exports = app;
