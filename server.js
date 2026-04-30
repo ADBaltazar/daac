@@ -1,16 +1,27 @@
+require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
 // Middleware para parsear JSON
 app.use(express.json());
 
-// String de conexão com MongoDB Atlas
-const DB_USERNAME = 'bLXP9AOQvaqWDd2n'; // Substitua pelo seu usuário
-const DB_PASSWORD = 'bLXP9AOQvaqWDd2n';
-const CONNECTION_STRING = `mongodb+srv://${DB_USERNAME}:${DB_PASSWORD}@cluster0.xx5mws4.mongodb.net/testdb`;
+// String de conexão com MongoDB Atlas usando variáveis de ambiente
+const DB_USERNAME = process.env.DB_USERNAME;
+const DB_PASSWORD = process.env.DB_PASSWORD;
+const DB_CLUSTER = process.env.DB_CLUSTER;
+const DB_NAME = process.env.DB_NAME;
+
+// Verificar se todas as variáveis necessárias estão definidas
+if (!DB_USERNAME || !DB_PASSWORD || !DB_CLUSTER || !DB_NAME) {
+  console.error('❌ Erro: Variáveis de ambiente do MongoDB não configuradas corretamente');
+  console.error('Certifique-se de que .env contém: DB_USERNAME, DB_PASSWORD, DB_CLUSTER, DB_NAME');
+  process.exit(1);
+}
+
+const CONNECTION_STRING = `mongodb+srv://${DB_USERNAME}:${DB_PASSWORD}@${DB_CLUSTER}/${DB_NAME}`;
 
 // Schema do usuário
 const userSchema = new mongoose.Schema({
@@ -56,7 +67,7 @@ app.get('/usuarios', async (req, res) => {
   }
 });
 
-// Conexão com MongoDB Atlas (sem opções obsoletas)
+// Conexão com MongoDB Atlas
 mongoose.connect(CONNECTION_STRING)
 .then(() => {
   console.log('✅ Conectado ao MongoDB Atlas com sucesso!');
