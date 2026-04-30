@@ -62,14 +62,8 @@ app.get('/usuarios', async (req, res) => {
   }
 });
 
-app.get('/lista', async (req, res) => {
-  try {
-    await connectToDatabase();
-    const usuarios = await User.find();
-    res.json(usuarios);
-  } catch (error) {
-    res.status(500).json({ erro: error.message });
-  }
+app.get('/', async (req, res) => {
+  res.send("<h1> Seja bem Vindo ao meu software em produção</h1>")
 });
 // Exportar para a Vercel (NÃO usar app.listen)
 module.exports = app;
