@@ -63,7 +63,7 @@ app.get('/usuarios', async (req, res) => {
 });
 
 app.get('/', async (req, res) => {
-  res.send("<h1> Seja bem Vindo ao meu software em produção</h1>")
+  res.send("<h1> Seja bem Vindo ao meu software em produção ... </h1>")
 });
 // Exportar para a Vercel (NÃO usar app.listen)
 module.exports = app;
